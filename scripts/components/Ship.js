@@ -46,6 +46,9 @@ const [shiprarity,setshiprarity]=useState(0)
     'Kyanite Resonator',
   ];
 
+  const getPartName = (part) => part?.data?.name ?? part?.name ?? '';
+  const getPartRarity = (part) => Number(part?.data?.rdata ?? part?.data?.rarity ?? 0);
+
     function convertToPlanetName(planetID) {
     const maxQuadrantsPerSystem = 4;
     const maxplanetsPersector = 4;
@@ -89,7 +92,17 @@ function hasAtLeastOneNonNullEntry(arr) {
       setSelectedPartsInShips([...selectedPartsInShips.filter((a) => a !== item.asset_id)])
     })
     setSelectedParts(Array(12).fill(null));
-    setAllParts((oldall)=>[...oldall,...arr])
+    setAllParts((oldall)=> {
+      const existing = new Set(oldall.map((part) => part.asset_id));
+      const next = [...oldall];
+      arr.forEach((item) => {
+        if (item?.asset_id && !existing.has(item.asset_id)) {
+          existing.add(item.asset_id);
+          next.push(item);
+        }
+      });
+      return next;
+    })
      
     setShowTip(false);
 
@@ -245,45 +258,42 @@ if(selectedPart !==null){
   };
 
 function selectBest(){
-  if(!allParts){
+  if(!Array.isArray(allParts) || allParts.length === 0){
     console.error("no inventory?")
+    return;
   }
-      selectedParts.forEach((installedPart, index) => {
-  const selectedPart1 = selectedParts[index];
-        
-      
-        var newarr=allParts.filter((p)=>p.name===selectedNames[index])
-        const filteredParts = newarr
-    .filter((part) => selectedNames.includes(part.name) && !selectedPartsInShips.includes(part.asset_id))
-   
-        var newarrsort=filteredParts.sort((p,np)=>p.data.rdata<np.data.rdata)
-        
-        
-        
-        console.log(newarrsort)
-        const selectedPart=newarrsort[0]
+  selectedParts.forEach((installedPart, index) => {
+    const filteredParts = allParts
+      .filter((part) => getPartName(part) === selectedNames[index])
+      .filter((part) => !selectedPartsInShips.includes(part.asset_id))
+      .sort((a, b) => getPartRarity(b) - getPartRarity(a));
 
-                  console.log(selectedPart.asset_id)
+    const selectedPart = filteredParts[0];
+    if (!selectedPart) {
+      return;
+    }
 
-setSelectedParts((prevSelectedParts) => {
+    console.log(selectedPart.asset_id)
 
-        const newSelectedParts = [...prevSelectedParts];
-        newSelectedParts[index] = { ...selectedPart, index: index, partId: selectedPart.asset_id };
-        setSelectedPartsInShips((prevSelectedPartsInShips) => {
-          const i = prevSelectedPartsInShips.indexOf(prevSelectedParts[index]?.asset_id);
-          const updatedSelectedPartsInShips = [...prevSelectedPartsInShips];
-          if (i > -1) updatedSelectedPartsInShips.splice(i, 1);
-          updatedSelectedPartsInShips.push(selectedPart.asset_id);
-                              console.log("us",selectedPart.asset_id,prevSelectedParts,selectedPartsInShips)
+    setSelectedParts((prevSelectedParts) => {
+      const newSelectedParts = [...prevSelectedParts];
+      newSelectedParts[index] = { ...selectedPart, index: index, partId: selectedPart.asset_id };
+      setSelectedPartsInShips((prevSelectedPartsInShips) => {
+        const updatedSelectedPartsInShips = prevSelectedPartsInShips.filter(
+          (assetId) => assetId !== prevSelectedParts[index]?.asset_id
+        );
+        const unique = new Set(updatedSelectedPartsInShips);
+        unique.add(selectedPart.asset_id);
+        console.log("us",selectedPart.asset_id,prevSelectedParts,selectedPartsInShips)
 
-          return updatedSelectedPartsInShips;
-        });
-                     
-  console.log("ns",selectedPart.asset_id,prevSelectedParts,newSelectedParts)
-
-        return newSelectedParts;
+        return [...unique];
       });
-      });
+
+      console.log("ns",selectedPart.asset_id,prevSelectedParts,newSelectedParts)
+
+      return newSelectedParts;
+    });
+  });
   
    
 };
@@ -471,7 +481,7 @@ setSelectedParts((prevSelectedParts) => {
 
     // Add the new part to selected parts in ships
     updatedSelectedPartsInShips.push(part.asset_id);
-    return updatedSelectedPartsInShips;
+    return [...new Set(updatedSelectedPartsInShips)];
   });
 
   // Update allParts: remove the new part, add the part coming off
