@@ -41,20 +41,20 @@ const wax = new waxjs.WaxJS({
                     setwax(wax);
                     const userAccount = await wax.login(identifier);
                     setid(userAccount.toString());
-                    if (!justid) {
-                        const response = await fetch("https://backend.deploystarship.com/api/v1/accounts", {
-                            method: 'PUT',
-                            body: JSON.stringify({ waxaccount: userAccount }),
-                            headers: {
-                                'Content-Type': 'text/plain',
-                                'X-Requested-With': 'JSON',
-                            },
-                        });
+                    // if (!justid) {
+                    //     const response = await fetch("https://backend.deploystarship.com/api/v1/accounts", {
+                    //         method: 'PUT',
+                    //         body: JSON.stringify({ waxaccount: userAccount }),
+                    //         headers: {
+                    //             'Content-Type': 'text/plain',
+                    //             'X-Requested-With': 'JSON',
+                    //         },
+                    //     });
 
-                        const data = await response.json();
-                        if (data.message !== "ok") {
-                            throw data.message;
-                        }
+                    //     const data = await response.json();
+                    //     if (data.message !== "ok") {
+                    //         throw data.message;
+                    //     }
 
                         setisloggedin(true);
                         setfirstrun(true);
@@ -78,20 +78,20 @@ const wax = new waxjs.WaxJS({
                         const userAccount = result.session.auth.actor;
                         setid(userAccount.toString());
 
-                        if (!justid) {
-                            const response = await fetch("https://backend.deploystarship.com/api/v1/accounts", {
-                                method: 'PUT',
-                                body: JSON.stringify({ waxaccount: userAccount }),
-                                headers: {
-                                    'Content-Type': 'text/plain',
-                                    'X-Requested-With': 'JSON',
-                                },
-                            });
+                        // if (!justid) {
+                        //     const response = await fetch("https://backend.deploystarship.com/api/v1/accounts", {
+                        //         method: 'PUT',
+                        //         body: JSON.stringify({ waxaccount: userAccount }),
+                        //         headers: {
+                        //             'Content-Type': 'text/plain',
+                        //             'X-Requested-With': 'JSON',
+                        //         },
+                        //     });
 
-                            const data = await response.json();
-                            if (data.message !== "ok") {
-                                throw data.message;
-                            }
+                        //     const data = await response.json();
+                        //     if (data.message !== "ok") {
+                        //         throw data.message;
+                        //     }
 
                             setisloggedin(true);
                             setfirstrun(true);
