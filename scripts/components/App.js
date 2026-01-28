@@ -49,20 +49,57 @@ const [topbarText,setTopbarText] = useState("");
  const [accapis, setaccapis] = useState([]);
 const [ahapis, setahapis] = useState([]);
 
-useEffect(async () => {
-  const pis = await fetch("https://validate.eosnation.io/wax/reports/endpoints.json");
-  const pis2 = await pis.json();
- const sortedAccapis = [...pis2.report.api_https2].sort((a, b) => (a[0].rank > b[0].rank) ? -1 : (a[0].rank < b[0].rank) ? 1 : 0).filter(api => {
-  // Exclude problematic URLs
-  return !api[1].includes("apiwax.3dkrender.com") && !api[1].includes("wax.greymass.com")&& !api[1].includes(" https://api.wax.greeneosio.com");
-});;
-  const sortedAhapis = [...pis2.report.atomic_https].sort((a, b) => (a[0].rank < b[0].rank) ? -1 : (a[0].rank > b[0].rank) ? 1 : 0).filter(api => {
-  // Exclude problematic URLs
-  return !api[1].includes("apiwax.3dkrender.com") && !api[1].includes("wax.greymass.com")&& !api[1].includes(" https://api.wax.greeneosio.com");
-});;
+useEffect(() => {
+  let isMounted = true;
+  const controller = new AbortController();
 
-  setaccapis(sortedAccapis);
-  setahapis(sortedAhapis);
+  const fetchApis = async () => {
+    try {
+      const pis = await fetch("https://validate.eosnation.io/wax/reports/endpoints.json", {
+        signal: controller.signal,
+      });
+      if (!pis.ok) {
+        throw new Error(`Failed to fetch endpoints: ${pis.status}`);
+      }
+      const pis2 = await pis.json();
+      const sortedAccapis = [...pis2.report.api_https2]
+        .sort((a, b) => (a[0].rank > b[0].rank ? -1 : a[0].rank < b[0].rank ? 1 : 0))
+        .filter((api) => {
+          // Exclude problematic URLs
+          return (
+            !api[1].includes("apiwax.3dkrender.com") &&
+            !api[1].includes("wax.greymass.com") &&
+            !api[1].includes(" https://api.wax.greeneosio.com")
+          );
+        });
+      const sortedAhapis = [...pis2.report.atomic_https]
+        .sort((a, b) => (a[0].rank < b[0].rank ? -1 : a[0].rank > b[0].rank ? 1 : 0))
+        .filter((api) => {
+          // Exclude problematic URLs
+          return (
+            !api[1].includes("apiwax.3dkrender.com") &&
+            !api[1].includes("wax.greymass.com") &&
+            !api[1].includes(" https://api.wax.greeneosio.com")
+          );
+        });
+
+      if (isMounted) {
+        setaccapis(sortedAccapis);
+        setahapis(sortedAhapis);
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.error("Failed to load API endpoints.", error);
+      }
+    }
+  };
+
+  fetchApis();
+
+  return () => {
+    isMounted = false;
+    controller.abort();
+  };
 }, []);
   
   useEffect(() => {
